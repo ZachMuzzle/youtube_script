@@ -2,8 +2,8 @@ from pytube import YouTube
 # from moviepy.editor import VideoFileClip
 from tqdm import tqdm
 import requests
-
-def download(url, output):
+import subprocess
+def download_video(url, output):
     try:
         youtube = YouTube(url)
 
@@ -34,7 +34,38 @@ def download(url, output):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-url = input("Enter youtube url: ")
-output = "/mnt/d/OBS/Videos_from_script"
+def audio_download(url, output):
+    try:
+        # Create a YouTube object
+        youtube = YouTube(url)
 
-download(url, output)
+        # Get the highest quality audio stream
+        audio_stream = youtube.streams.filter(only_audio=True).first()
+
+        # Download the audio
+        audio_stream.download(output_path=output)
+
+        # Rename the downloaded audio file with an MP3 extension
+        audio_file = audio_stream.default_filename
+        mp3_file = audio_file[:-4] + ".mp3"
+        new_file_path = f"{output}/{mp3_file}"
+        current_file_path = f"{output}/{audio_file}"
+        import os
+        os.rename(current_file_path, new_file_path)
+
+        subprocess.call(['ffmpeg', '-i', new_file_path, f'{output}/{mp3_file}'])
+
+        print("Extraction complete!")
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+decision = input("Enter in Video or Audio: ")
+if(decision == 'Video' or decision == 'video' or decision == 'v' or decision == 'V'):
+    url = input("Enter youtube url: ")
+    output = "/mnt/g/Editing/OBS/Videos_from_script"
+    download_video(url, output)
+elif(decision == 'Audio' or decision == 'audio' or decision == 'a' or decision == 'A'):
+    url = input("Enter youtube url: ")
+    output = "/mnt/g/Editing/OBS/Videos_from_script"
+    audio_download(url, output)
