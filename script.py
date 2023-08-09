@@ -67,5 +67,5 @@ if(decision == 'Video' or decision == 'video' or decision == 'v' or decision == 
     download_video(url, output)
 elif(decision == 'Audio' or decision == 'audio' or decision == 'a' or decision == 'A'):
     url = input("Enter youtube url: ")
-    output = "/mnt/g/Editing/OBS/Videos_from_script"
+    output = "/mnt/g/Editing/OBS/Videos_from_script/Audio"
     audio_download(url, output)
