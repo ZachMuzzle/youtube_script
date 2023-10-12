@@ -3,15 +3,16 @@ from pytube import YouTube
 from tqdm import tqdm
 import requests
 import subprocess
-def download_video(url, output):
+def download_video(url, outputRaw,audioOutput):
     try:
         youtube = YouTube(url)
 
-        video_stream = youtube.streams.get_highest_resolution()
-
+        video_stream = youtube.streams.filter(file_extension='mp4', res="1080p",fps=30).first()
+        print(video_stream)
         video_title = youtube.title
         file_size = video_stream.filesize
-        output = output + f"/{str(video_title)}.mp4"
+        print(file_size)
+        output = outputRaw + f"/{str(video_title)}.mp4"
         # print(output)
         response = requests.get(video_stream.url, stream=True)
 
@@ -28,9 +29,13 @@ def download_video(url, output):
         progress_bar.close()
         # video_stream.download(output_path=output,filename_prefix="video", on_progress_callback=lambda chunk, file_handle, bytes_remaining: progress_bar.update(file_size - bytes_remaining))
 
-        print("Download has been completed!")
+        print("Download has been completed!\n")
 
+        decision = input("Would you like to download the Audio as well? \nIf so press 'A' on your keyboard: ")
+        if(decision =='A' or decision == 'a'):
+            audio_download(url,audioOutput)
         print("Conversion complete!")
+
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
@@ -64,7 +69,8 @@ decision = input("Enter in Video or Audio: ")
 if(decision == 'Video' or decision == 'video' or decision == 'v' or decision == 'V'):
     url = input("Enter youtube url: ")
     output = "/mnt/g/Editing/OBS/Videos_from_script"
-    download_video(url, output)
+    audioOutput = "/mnt/g/Editing/OBS/Videos_from_script/Audio"
+    download_video(url,output,audioOutput)
 elif(decision == 'Audio' or decision == 'audio' or decision == 'a' or decision == 'A'):
     url = input("Enter youtube url: ")
     output = "/mnt/g/Editing/OBS/Videos_from_script/Audio"
