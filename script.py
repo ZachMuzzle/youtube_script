@@ -1,77 +1,62 @@
 from pytube import YouTube
-# from moviepy.editor import VideoFileClip
-from tqdm import tqdm
-import requests
-import subprocess
-def download_video(url, outputRaw,audioOutput):
+import yt_dlp
+import shutil
+""" Main downloader used now. Uses YT_DLP """
+def download_video2(url):
+    """ 
+    Method for downloading youtube videos using yt_dl
+
+    Parameters
+    ----------
+    url: pass in a Youtube url
+     """
+    ydl = yt_dlp.YoutubeDL()
     try:
-        youtube = YouTube(url)
-
-        video_stream = youtube.streams.filter(file_extension='mp4', res="1080p",fps=30).first()
-        print(video_stream)
-        video_title = youtube.title
-        file_size = video_stream.filesize
-        print(file_size)
-        output = outputRaw + f"/{str(video_title)}.mp4"
-        # print(output)
-        response = requests.get(video_stream.url, stream=True)
-
-        #progress bar
-        progress_bar = tqdm(total=file_size, unit='bytes', unit_scale=True, desc=f"Downloading {video_title}")
-
-         # Download the video in chunks and update the progress bar
-        with open(output, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                    progress_bar.update(len(chunk))
-
-        progress_bar.close()
-        # video_stream.download(output_path=output,filename_prefix="video", on_progress_callback=lambda chunk, file_handle, bytes_remaining: progress_bar.update(file_size - bytes_remaining))
-
-        print("Download has been completed!\n")
-
-        decision = input("Would you like to download the Audio as well? \nIf so press 'A' on your keyboard: ")
-        if(decision =='A' or decision == 'a'):
-            audio_download(url,audioOutput)
-        print("Conversion complete!")
-
+        options = {
+            'format': 'bestvideo[height<=2160]+bestaudio/best[height<=2160]',
+            'outtmpl': '/mnt/g/Editing/OBS/Videos_from_script/%(title)s.%(ext)s',
+        }
+        with ydl:
+            result = ydl.extract_info(url,download=True, extra_info=options)
+        print("Download was completed!")
+        #Transfer file to another location
+        video_title = result.get('title', 'video')
+        videoId = result['id']
+        file_extension = result.get('ext', 'mkv')
+        file_name = f"{video_title} [{videoId}].{file_extension}"
+        # TODO: Look into reading title and seeing if word in title matches a folder 
+        print(file_name)
+        # Setup env for these paths
+        source_path = f"/home/zachmuzzle/youtube_script/{file_name}"
+        dest_path = f"/mnt/g/Editing/OBS/Videos_from_script/"
+        shutil.move(source_path, dest_path)
+        print("Move was completed!")
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print(f"{(e)}")
 
-def audio_download(url, output):
-    try:
-        # Create a YouTube object
-        youtube = YouTube(url)
+def audio_download_dlp(link): 
+    """ 
+    Method for downloading audio from Youtube videos using yt_dl
 
-        # Get the highest quality audio stream
-        audio_stream = youtube.streams.filter(only_audio=True).first()
+    Parameters
+    ----------
+    url: pass in a Youtube url 
+     """
+    with yt_dlp.YoutubeDL({'extract_audio': True, 'format': 'bestaudio', 'outtmpl': '%(title)s.mp3'}) as video:
+        info_dict = video.extract_info(link, download = True)
+        video_title = info_dict['title']
+        print(video_title)
+        video.download(link)    
+        print("Successfully Downloaded - see local folder on Google Colab")
 
-        # Download the audio
-        audio_stream.download(output_path=output)
-
-        # Rename the downloaded audio file with an MP3 extension
-        audio_file = audio_stream.default_filename
-        mp3_file = audio_file[:-4] + ".mp3"
-        new_file_path = f"{output}/{mp3_file}"
-        current_file_path = f"{output}/{audio_file}"
-        import os
-        os.rename(current_file_path, new_file_path)
-
-        subprocess.call(['ffmpeg', '-i', new_file_path, f'{output}/{mp3_file}'])
-
-        print("Extraction complete!")
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-decision = input("Enter in Video or Audio: ")
-if(decision == 'Video' or decision == 'video' or decision == 'v' or decision == 'V'):
-    url = input("Enter youtube url: ")
-    output = "/mnt/g/Editing/OBS/Videos_from_script"
-    audioOutput = "/mnt/g/Editing/OBS/Videos_from_script/Audio"
-    download_video(url,output,audioOutput)
-elif(decision == 'Audio' or decision == 'audio' or decision == 'a' or decision == 'A'):
-    url = input("Enter youtube url: ")
-    output = "/mnt/g/Editing/OBS/Videos_from_script/Audio"
-    audio_download(url, output)
+if __name__ == "__main__":
+    decision = input("Enter in Video or Audio: ")
+    if(decision == 'Video' or decision == 'video' or decision == 'v' or decision == 'V'):
+        url = input("Enter youtube url: ")
+        output = "/mnt/g/Editing/OBS/Videos_from_script"
+        audioOutput = "/mnt/g/Editing/OBS/Videos_from_script/Audio"
+        download_video2(url)
+    elif(decision == 'Audio' or decision == 'audio' or decision == 'a' or decision == 'A'):
+        url = input("Enter youtube url: ")
+        output = "/mnt/g/Editing/OBS/Videos_from_script/Audio"
+        audio_download_dlp(url)
