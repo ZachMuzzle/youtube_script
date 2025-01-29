@@ -1,4 +1,3 @@
-from pytube import YouTube
 import yt_dlp
 import shutil
 """ Main downloader used now. Uses YT_DLP """
