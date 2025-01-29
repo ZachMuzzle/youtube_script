@@ -5,3 +5,5 @@
 *.mkv
 
 *.webm
+
+.vscode
